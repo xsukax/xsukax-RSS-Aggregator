@@ -1,0 +1,47 @@
+name: Test RSS Aggregator
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  python-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install dependencies in a clean environment
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt pytest httpx
+      - name: Test Python API and first-run authentication
+        run: python -m pytest -q
+      - name: Check browser JavaScript syntax
+        run: node --check app/static/app.js
+
+  docker-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build production image
+        run: docker build --tag xsukax-rss-ci .
+      - name: Start the real server and verify startup
+        run: |
+          docker run -d --name xsukax-rss-ci --rm \
+            -e DATA_DIR=/tmp/rss-ci-data -e APP_SECRET=ci-temp-secret \
+            -e SETUP_TOKEN=ci-temp-setup-token \
+            -p 127.0.0.1:18090:8080 xsukax-rss-ci
+          for i in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:18090/healthz; then
+              curl -fsS http://127.0.0.1:18090/api/auth/state | grep -q '"configured":false'
+              exit 0
+            fi
+            sleep 2
+          done
+          docker logs xsukax-rss-ci
+          exit 1
+      - name: Container logs on failure
+        if: failure()
+        run: docker logs xsukax-rss-ci || true

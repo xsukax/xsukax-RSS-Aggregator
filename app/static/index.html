@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#152437"><title>xsukax RSS Aggregator</title>
+  <link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+<div id="auth" class="auth-screen hidden"><section class="auth-card">
+  <div class="brand-mark">✦</div><h1>xsukax RSS</h1>
+  <p id="auth-caption">Your private RSS workspace</p>
+  <form id="auth-form">
+    <label>Administrator username<input name="username" autocomplete="username" required maxlength="80" placeholder="Choose a username"></label>
+    <label id="password-row">Password<input type="password" name="password" autocomplete="current-password" required minlength="12" maxlength="1024" placeholder="Enter password"></label>
+    <label id="confirm-row" class="hidden">Confirm administrator password<input type="password" name="confirm_password" autocomplete="new-password" minlength="12" maxlength="1024" placeholder="Enter the password again"></label>
+    <label id="token-row" class="hidden">Installation setup token<input name="setup_token" autocomplete="off" placeholder="Token printed by install.sh"></label>
+    <p id="setup-hint" class="fine hidden">Choose a unique password (at least 12 characters). The setup token is printed by <code>install.sh</code> and stored in the server's private <code>.env</code> file.</p>
+    <p id="auth-error" class="form-error hidden" role="alert"></p>
+    <button class="primary wide" id="auth-submit" type="submit">Sign in</button>
+  </form><p class="fine">Self-hosted · Local-first · RSS and Atom</p>
+</section></div>
+<div id="app" class="app hidden">
+  <header class="topbar">
+    <button id="mobile-nav" class="icon-btn mobile-only" aria-label="Open navigation">☰</button>
+    <span class="small-logo">✦</span><strong class="top-title">xsukax <em>RSS</em></strong>
+    <div class="top-search"><span>⌕</span><input id="search" placeholder="Search articles (FTS syntax)…" aria-label="Search articles"></div>
+    <button id="refresh-all" class="icon-btn" title="Refresh all feeds (R)">⟳</button>
+    <button id="add-btn" class="primary" title="Subscribe to a feed">＋ <span class="hide-small">Add feed</span></button>
+    <button id="settings-btn" class="icon-btn" title="Settings">⚙</button>
+    <button id="logout-btn" class="icon-btn" title="Sign out">↪</button>
+  </header>
+  <div class="workspace" id="workspace">
+    <aside class="navigation" id="navigation">
+      <div class="nav-content">
+        <div class="aside-head"><span>LIBRARY</span><button class="tiny" id="add-account" title="Add account">＋</button></div>
+        <div id="smart-nav" class="nav-group"></div>
+        <div class="aside-head"><span>ACCOUNTS & FEEDS</span><button class="tiny" id="add-folder" title="Add folder">＋</button></div>
+        <div id="account-nav" class="nav-group"></div>
+        <div class="aside-head"><span>SAVED SEARCHES</span><button class="tiny" id="add-smart" title="Add saved search">＋</button></div>
+        <div id="saved-nav" class="nav-group"></div>
+        <div class="aside-head"><span>TAGS</span><button class="tiny" id="add-tag" title="Add tag">＋</button></div>
+        <div id="tags-nav" class="nav-group"></div>
+      </div>
+      <div class="sidebar-bottom"><button id="rules-btn">⇄ <span>Message filters</span></button><button id="logs-btn">▤ <span>Activity log</span></button><div class="sys-status" id="status">Ready</div></div>
+    </aside>
+    <div class="resize-bar" id="resize-left" role="separator" aria-label="Resize navigation"></div>
+    <main class="article-list" id="list-pane">
+      <div class="list-head"><div><h2 id="view-title">All Articles</h2><p id="view-info">Your subscribed feeds appear here</p></div>
+        <button id="more-current" class="icon-btn" title="Manage current feed or folder">⋯</button></div>
+      <div class="filterbar">
+        <button class="chip" data-filter="unread">Unread</button><button class="chip" data-filter="starred">★ Starred</button>
+        <button class="chip" data-filter="bookmarked">◆ Saved</button><button class="chip" data-filter="enclosures">▣ Media</button>
+        <button class="chip" id="pin-filter" title="Keep filters while navigating">♧ Pin</button>
+      </div>
+      <div class="list-controls"><label class="select-all"><input id="select-all" type="checkbox" aria-label="Select all visible articles"></label>
+        <select id="sort" aria-label="Sort articles"><option value="published">Publication date</option><option value="fetched">Downloaded</option><option value="updated">Last updated</option><option value="title">Title</option><option value="author">Author</option></select>
+        <button id="order" class="small-btn" title="Change sort order">↓</button>
+        <span class="push"></span><button id="mark-all-read" class="small-btn" title="Mark listed articles read">✓ Read</button></div>
+      <div id="bulkbar" class="bulkbar hidden"><span id="selection-count">0 selected</span><select id="bulk-action"><option value="read">Mark read</option><option value="unread">Mark unread</option><option value="star">Star</option><option value="unstar">Unstar</option><option value="bookmark">Bookmark</option><option value="archive">Archive</option><option value="trash">Move to Trash</option><option value="restore">Restore</option></select><button id="bulk-apply" class="small-btn">Apply</button></div>
+      <div id="article-items" class="article-items" role="listbox" aria-label="Articles"></div>
+      <div class="list-footer"><button id="prev-page" class="small-btn">← Previous</button><span id="pager">0 articles</span><button id="next-page" class="small-btn">Next →</button></div>
+    </main>
+    <div class="resize-bar" id="resize-right" role="separator" aria-label="Resize article list"></div>
+    <section class="reader" id="reader-pane">
+      <div class="reader-empty" id="reader-empty"><div class="empty-symbol">✦</div><h2>Find something worth reading.</h2><p>Select an article to open it here. Your feeds, saved searches, and tags are on the left.</p></div>
+      <div id="reader-content" class="reader-content hidden">
+        <div class="reader-toolbar"><button id="reader-back" class="small-btn mobile-only">← Articles</button>
+          <button id="reader-read" class="icon-btn" title="Toggle read/unread">◉</button>
+          <button id="reader-star" class="icon-btn" title="Toggle star">☆</button>
+          <button id="reader-bookmark" class="icon-btn" title="Toggle bookmark">◇</button>
+          <button id="reader-archive" class="icon-btn" title="Archive">▣</button>
+          <button id="reader-trash" class="icon-btn" title="Move to Trash">♲</button>
+          <span class="push"></span><a id="reader-open" target="_blank" rel="noopener noreferrer" class="small-btn">↗ Website</a>
+          <button id="reader-print" class="icon-btn" title="Print">▤</button></div>
+        <div class="reader-scroll"><div class="article-body">
+          <p class="article-origin" id="reader-origin"></p>
+          <h1 id="reader-title" dir="auto"></h1><p class="reader-meta" id="reader-meta"></p>
+          <div class="reader-tabs"><button data-mode="summary" class="selected">Summary</button><button data-mode="content">Feed content</button><button data-mode="plain">Plain text</button></div>
+          <div id="reader-html" class="syndicated" dir="auto"></div>
+          <div id="reader-enclosures" class="enclosures"></div>
+          <div class="article-end"><span id="reader-tag-list"></span><form id="tag-article-form"><input id="tag-article" placeholder="Add tag…" maxlength="100"><button class="small-btn">＋</button></form></div>
+          <p class="source-disclaimer">Article content originates from the publisher's feed. Open the original website for the source page.</p>
+        </div></div>
+      </div>
+    </section>
+  </div>
+</div>
+<div id="modal-overlay" class="modal-overlay hidden" role="presentation"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title"><header class="modal-head"><h2 id="modal-title"></h2><button id="modal-close" class="icon-btn" title="Close">✕</button></header><div id="modal-body" class="modal-body"></div></div></div>
+<div id="toast" class="toast hidden" role="status"></div>
+<script defer src="/static/app.js"></script>
+</body></html>
